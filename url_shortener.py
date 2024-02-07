@@ -60,9 +60,16 @@ def create(body: CreateRequestBody):
 
 def get(shortcode: str):
     try:
-        surl = short_url_store.get_url(shortcode)
+        surl = short_url_store.get_url_and_increment_stats(shortcode)
         return Response(status_code=302, headers={
             "Location": surl.referenced_url
         })
+    except short_url_store.UnknownShortcodeError:
+        raise HTTPException(404, detail=f"Shortcode `{shortcode}` not found")
+
+def get_stats(shortcode: str):
+    try:
+        stats = short_url_store.get_url_stats(shortcode)
+        return stats
     except short_url_store.UnknownShortcodeError:
         raise HTTPException(404, detail=f"Shortcode `{shortcode}` not found")

@@ -26,14 +26,26 @@ def add_url_to_store(item: ShortenedURL):
 
     return ShortenedURL
 
-def get_url(shortcode: str):
+def get_url_and_increment_stats(shortcode: str):
     surl = SHORTENED_URL_STORE.get(shortcode)
-    if surl is None:
+    stats = URL_STATS_STORE.get(shortcode)
+    if surl is None or stats is None:
         raise UnknownShortcodeError(f"Shortcode `{shortcode}` is not known")
     
     # I like the idea that the store should automatically track the stats.  It
     # is however debatable whether this should be a part of this method or if
-    # we should provide a "increment stats" function, which the user can, for
-    # example, call after returning the 302 to whoever called the API.
+    # we should provide a "increment stats" function, which the can, for
+    # example, be called after returning the 302.
+
+    stats.redirectCount += 1
+    stats.lastRedirect = datetime.now(timezone.utc).isoformat()
+    URL_STATS_STORE[surl.shortcode] = stats
+
     return surl
 
+def get_url_stats(shortcode: str):
+    stats = URL_STATS_STORE.get(shortcode)
+    if stats is None:
+        raise UnknownShortcodeError(f"Shortcode `{shortcode}` is not known")
+    
+    return stats
