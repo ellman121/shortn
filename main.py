@@ -7,6 +7,8 @@
 
 from fastapi import FastAPI
 
+import url_shortener
+
 app = FastAPI()
 
 @app.get("/")
@@ -14,8 +16,8 @@ def read_root():
     return "Hello world"
 
 @app.post("/shorten")
-def create_shortenedUrl():
-    return "TBD"
+def create_shortenedUrl(body: url_shortener.RequestBody):
+    return url_shortener.create(body=body)
 
 @app.get("/{shortcode}")
 def read_shortcode(shortcode: str):
