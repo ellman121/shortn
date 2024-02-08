@@ -1,14 +1,10 @@
 import url_shortener
 
 from fastapi import FastAPI
-from sqlalchemy import create_engine, text
-
-
-# See Notes in Readme
-DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/shortn"
+from sqlalchemy import text
+from db import db_engine
 
 app = FastAPI()
-db_engine = create_engine(DATABASE_URL)
 
 # See Notes in Readme
 @app.on_event("startup")
@@ -41,15 +37,12 @@ def read_root():
 
 @app.post("/shorten")
 def create_shortenedUrl(body: url_shortener.CreateRequestBody):
-    with db_engine.connect() as conn:
-        return url_shortener.create_short_url(conn, body=body)
+    return url_shortener.create_short_url(body=body)
 
 @app.get("/{shortcode}")
 def read_shortcode(shortcode: str):
-    with db_engine.connect() as conn:
-        return url_shortener.get_short_url(conn, shortcode=shortcode)
+    return url_shortener.get_short_url(shortcode=shortcode)
 
 @app.get("/{shortcode}/stats")
 def read_shortcode_stats(shortcode: str):
-    with db_engine.connect() as conn:
-        return url_shortener.get_stats(conn, shortcode=shortcode)
+    return url_shortener.get_stats(shortcode=shortcode)
