@@ -11,10 +11,10 @@ from fastapi import HTTPException, Response
 SHORTCODE_REGEX = "[a-zA-Z0-9]{6}"
 
 class CreateRequestBody(BaseModel):
-    url: str = ""
+    url: Union[str, None] = ""
     shortcode: Union[str, None]= None
 
-def create_short_url(body: CreateRequestBody):
+def create_short_url(body: Union[CreateRequestBody, None]):
     if body is None:
         # Again, in the real would, you would track request IDs and stuff
         # for your support staff to use to track down what went wrong, but
