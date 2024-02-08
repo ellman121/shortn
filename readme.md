@@ -4,10 +4,28 @@
 
 I've never used FastAPI before and I'm not a python professional, so expect some things to be non-conventional.
 
+### How to run this
+
+I'm assuming the user has postgres running with a DB called `shortn` already there.  No tables need to exist already though.
+
+```bash
+pip install -r deps
+uvicorn main:app --reload
+```
+
+This will start a server on the local machine port `8000`.  You can interact with it via `curl` or Postman or whatever you're into.
+
+### How to run tests
+
+```bash
+python -m unittest -v tests 
+```
+
 ### File Structure
 
 - `main.py` includes the routes being served
 - `classes.py` includes shared class definitions (no real code)
+- `db.py` is the database initialization stuff
 - `url_shortener.py` includes implmentations for the routes
 - `short_url_store.py` is the database implementation/abstraction layer
 
