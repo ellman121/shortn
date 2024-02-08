@@ -16,7 +16,7 @@ class CreateRequestBody(BaseModel):
     url: str = ""
     shortcode: Union[str, None]= None
 
-def create(conn: Connection, body: CreateRequestBody):
+def create_short_url(conn: Connection, body: CreateRequestBody):
     if body is None:
         # Again, in the real would, you would track request IDs and stuff
         # for your support staff to use to track down what went wrong, but
@@ -59,7 +59,7 @@ def create(conn: Connection, body: CreateRequestBody):
     # shortcode is returned
     return { "shortcode": surl.shortcode }
 
-def get(conn: Connection, shortcode: str):
+def get_short_url(conn: Connection, shortcode: str):
     try:
         surl = short_url_store.get_url_and_increment_stats(conn, shortcode)
         return Response(status_code=302, headers={

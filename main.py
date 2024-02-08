@@ -42,12 +42,12 @@ def read_root():
 @app.post("/shorten")
 def create_shortenedUrl(body: url_shortener.CreateRequestBody):
     with db_engine.connect() as conn:
-        return url_shortener.create(conn, body=body)
+        return url_shortener.create_short_url(conn, body=body)
 
 @app.get("/{shortcode}")
 def read_shortcode(shortcode: str):
     with db_engine.connect() as conn:
-        return url_shortener.get(conn, shortcode=shortcode)
+        return url_shortener.get_short_url(conn, shortcode=shortcode)
 
 @app.get("/{shortcode}/stats")
 def read_shortcode_stats(shortcode: str):
