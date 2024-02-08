@@ -35,3 +35,5 @@ python -m unittest -v tests
 - You wouldn't want to have one DB connection per request (especially in high traffic scenarios). I just did that here because I felt like the infrastructure to build/maintain shared connections was beyond the scope of this coding challenge and also I'm not sure how to do it off hand.
 - All the DB initialization wouldn't be done as I have it here, but for completeness of a coding exercise, I am showing it all here.
 - I wrote this using raw SQL but you would ideally use some kind of ORM to make your queries more stable and easier to read
+- You would do a lot more tracking of request IDs / auth / etc., but I've skipped all that here since it felt beyond the scope of the exercise
+- I'm generating the random shortcodes in python, but intelligent people can disagree about (a) when is best to do it and (b) where in the codebase.

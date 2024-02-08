@@ -16,9 +16,6 @@ class CreateRequestBody(BaseModel):
 
 def create_short_url(body: Union[CreateRequestBody, None]):
     if body is None:
-        # Again, in the real would, you would track request IDs and stuff
-        # for your support staff to use to track down what went wrong, but
-        # not messing around with it for the coding challenge
         raise HTTPException(400, detail="Invalid request body")
     
     referenced_url = body.url
@@ -33,13 +30,7 @@ def create_short_url(body: Union[CreateRequestBody, None]):
     if parsedUrl.scheme == "" or parsedUrl.netloc == "":
         raise HTTPException(400, detail=f"'{referenced_url}' is an invalid url. Please provide both scheme://net.loc")
     
-    # Intelligent people can disagree on whether or not the ShortenedURL class
-    # should do this on init or require it to be passed in. I'm choosing to
-    # managet the shortcode generation myself and pass it into the class
     if body.shortcode is None:
-        # In the real world you would be smarter about randomly generating a
-        # shortcode, but here I'm just going to hope that I never get a
-        # collision and use this library to generate a string
         body.shortcode = rstr.xeger(SHORTCODE_REGEX)
     
     new_shortcode = body.shortcode
@@ -53,8 +44,6 @@ def create_short_url(body: Union[CreateRequestBody, None]):
     except DuplicateShortcodeError:
         raise HTTPException(409, detail=f"Shortcode `{new_shortcode}` already in use")
     
-    # We don't return the whole object including the referened URL, only the
-    # shortcode is returned
     return { "shortcode": surl.shortcode }
 
 def get_short_url(shortcode: str):

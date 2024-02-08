@@ -2,7 +2,6 @@ from classes import DuplicateShortcodeError, ShortenedURL, URLStats, UnknownShor
 from sqlalchemy import text
 from db import db_engine
 
-# Adds to the store and returns the shortened URL object
 def add_url_to_store(item: ShortenedURL):
     with db_engine.connect() as conn:
         shortcode = item.shortcode
