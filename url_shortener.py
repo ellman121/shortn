@@ -5,8 +5,9 @@ import short_url_store
 from typing import Union
 from pydantic import BaseModel
 from urllib.parse import urlparse
-from classes import ShortenedURL
+from classes import ShortenedURL, UnknownShortcodeError, DuplicateShortcodeError
 from fastapi import HTTPException, Response
+from sqlalchemy import Connection
 
 
 SHORTCODE_REGEX = "[a-zA-Z0-9]{6}"
@@ -15,7 +16,7 @@ class CreateRequestBody(BaseModel):
     url: str = ""
     shortcode: Union[str, None]= None
 
-def create(body: CreateRequestBody):
+def create(conn: Connection, body: CreateRequestBody):
     if body is None:
         # Again, in the real would, you would track request IDs and stuff
         # for your support staff to use to track down what went wrong, but
@@ -50,26 +51,26 @@ def create(body: CreateRequestBody):
 
     surl = ShortenedURL(shortcode=new_shortcode, referenced_url=referenced_url)
     try:
-        short_url_store.add_url_to_store(surl)
-    except short_url_store.DuplicateShortcodeError:
+        short_url_store.add_url_to_store(conn, surl)
+    except DuplicateShortcodeError:
         raise HTTPException(409, detail=f"Shortcode `{new_shortcode}` already in use")
     
     # We don't return the whole object including the referened URL, only the
     # shortcode is returned
     return { "shortcode": surl.shortcode }
 
-def get(shortcode: str):
+def get(conn: Connection, shortcode: str):
     try:
-        surl = short_url_store.get_url_and_increment_stats(shortcode)
+        surl = short_url_store.get_url_and_increment_stats(conn, shortcode)
         return Response(status_code=302, headers={
             "Location": surl.referenced_url
         })
-    except short_url_store.UnknownShortcodeError:
+    except UnknownShortcodeError:
         raise HTTPException(404, detail=f"Shortcode `{shortcode}` not found")
 
-def get_stats(shortcode: str):
+def get_stats(conn: Connection, shortcode: str):
     try:
-        stats = short_url_store.get_url_stats(shortcode)
+        stats = short_url_store.get_url_stats(conn, shortcode)
         return stats
-    except short_url_store.UnknownShortcodeError:
+    except UnknownShortcodeError:
         raise HTTPException(404, detail=f"Shortcode `{shortcode}` not found")

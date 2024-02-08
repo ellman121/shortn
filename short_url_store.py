@@ -1,51 +1,55 @@
-from datetime import datetime, timezone
-from classes import ShortenedURL, URLStats
+from classes import DuplicateShortcodeError, ShortenedURL, URLStats, UnknownShortcodeError, DBMismatchError
+from sqlalchemy import Connection, text
 
-# For now I'm going to store things in memory, I'll set up
-# a database later
-SHORTENED_URL_STORE: dict[str, ShortenedURL] = {}
-URL_STATS_STORE: dict[str, URLStats] = {}
-
-class DuplicateShortcodeError(Exception):
-    pass
-
-class UnknownShortcodeError(Exception):
-    pass
 
 # Adds to the store and returns the shortened URL object
-def add_url_to_store(item: ShortenedURL):
-    if SHORTENED_URL_STORE.get(item.shortcode) is not None:
+def add_url_to_store(conn: Connection, item: ShortenedURL):
+    shortcode = item.shortcode
+    try:
+        conn.execute(text(f"""INSERT INTO public.short_urls (shortcode, referenced_url)
+                          VALUES ('{shortcode}', '{item.referenced_url}');"""))
+        conn.execute(text(f"""INSERT INTO public.stats (shortcode) VALUES ('{shortcode}');"""))
+    except:
         raise DuplicateShortcodeError(f"Shortcode `{item.shortcode}` already exists")
-    
-    SHORTENED_URL_STORE[item.shortcode] = item
-    URL_STATS_STORE[item.shortcode] = URLStats(
-        created=datetime.now(timezone.utc).isoformat(),
-        lastRedirect=None,
-        redirectCount=0
-    )
 
+    conn.commit()
     return ShortenedURL
 
-def get_url_and_increment_stats(shortcode: str):
-    surl = SHORTENED_URL_STORE.get(shortcode)
-    stats = URL_STATS_STORE.get(shortcode)
-    if surl is None or stats is None:
+def get_url_and_increment_stats(conn: Connection, shortcode: str):
+    query = conn.execute(text(f"""SELECT referenced_url FROM public.short_urls
+                                  WHERE shortcode='{shortcode}'"""))
+    row = query.first()
+    if row is None:
         raise UnknownShortcodeError(f"Shortcode `{shortcode}` is not known")
-    
-    # I like the idea that the store should automatically track the stats.  It
-    # is however debatable whether this should be a part of this method or if
+
+    referenced_url = row[0]
+
+    # I like the idea that the store class should track the stats. It is
+    # however debatable whether this should be a part of this method or if
     # we should provide a "increment stats" function, which the can, for
     # example, be called after returning the 302.
 
-    stats.redirectCount += 1
-    stats.lastRedirect = datetime.now(timezone.utc).isoformat()
-    URL_STATS_STORE[surl.shortcode] = stats
+    query = conn.execute(text(f"""SELECT redirect_count FROM public.stats
+                                  WHERE shortcode='{shortcode}'"""))
+    row = query.first()
+    if row is None:
+        raise DBMismatchError
+    
+    count = row[0]
+    conn.execute(text(f"""UPDATE public.stats SET
+                      redirect_count = {count + 1},
+                      last_redirect = CURRENT_TIMESTAMP
+                      WHERE shortcode='{shortcode}'"""))
 
-    return surl
+    conn.commit()
+    return ShortenedURL(shortcode=shortcode, referenced_url=referenced_url)
 
-def get_url_stats(shortcode: str):
-    stats = URL_STATS_STORE.get(shortcode)
-    if stats is None:
+def get_url_stats(conn: Connection, shortcode: str):
+    query = conn.execute(text(f"""SELECT created, last_redirect, redirect_count FROM public.stats
+                              WHERE shortcode='{shortcode}'"""))
+    row = query.first()
+    if row is None:
         raise UnknownShortcodeError(f"Shortcode `{shortcode}` is not known")
     
-    return stats
+    conn.commit()
+    return URLStats(created=row[0], lastRedirect=row[1], redirectCount=row[2])

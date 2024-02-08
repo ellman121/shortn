@@ -1,5 +1,6 @@
 from typing import Union
 from pydantic import BaseModel
+from datetime import datetime
 
 
 class ShortenedURL(BaseModel):
@@ -7,6 +8,18 @@ class ShortenedURL(BaseModel):
     referenced_url: str
 
 class URLStats(BaseModel):
-    created: str # ISO format datetime string
-    lastRedirect: Union[str, None] # Again ISOFormat
+    created: datetime # ISO format datetime string
+    lastRedirect: Union[datetime, None] # Again ISOFormat
     redirectCount: int
+
+class DuplicateShortcodeError(Exception):
+    pass
+
+class UnknownShortcodeError(Exception):
+    pass
+
+class DBMismatchError(Exception):
+    pass
+
+class DBConnectionError(Exception):
+    pass
